@@ -68,20 +68,18 @@ namespace ClubEmailer
                     log.LogInformation($"Found {members.Count} members who have consented to being contacted.");
 
                     var client = new SendGridClient(Environment.GetEnvironmentVariable("SendGridApiKey"));
-                    var msg = new SendGridMessage();
 
-                    msg.SetFrom(new EmailAddress("james@m1dst.co.uk", "James Patterson (M1DST)"));
-
-                    msg.AddTo("james@m1dst.co.uk", "James Patterson (M1DST)");
-                    var recipients = members.Select(x => new EmailAddress(x.EmailAddress, x.Name)).ToList();
-                    msg.AddBccs(recipients);
-
-                    msg.SetSubject("Coming Soon at the Swindon & District Amateur Radio Club");
-                    //msg.AddContent(MimeType.Text, "This is just a simple test message!");
-                    msg.AddContent(MimeType.Html, emailHtmlBody);
-
-                    var response = client.SendEmailAsync(msg).Result;
-
+                    members.ForEach(async member =>
+                    {
+                        var msg = new SendGridMessage();
+                        msg.SetFrom(new EmailAddress("james@m1dst.co.uk", "James Patterson (M1DST)"));
+                        msg.AddTo(member.EmailAddress, member.Name);
+                        msg.SetSubject("Coming Soon at the Swindon & District Amateur Radio Club");
+                        //msg.AddContent(MimeType.Text, "This is just a simple test message!");
+                        msg.AddContent(MimeType.Html, emailHtmlBody);
+                        var response = await client.SendEmailAsync(msg);
+                    });
+                    
                     log.LogInformation("Done.");
 
                 }
