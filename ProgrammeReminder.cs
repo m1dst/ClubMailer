@@ -71,13 +71,22 @@ namespace ClubEmailer
 
                     members.ForEach(async member =>
                     {
-                        var msg = new SendGridMessage();
-                        msg.SetFrom(new EmailAddress("james@m1dst.co.uk", "James Patterson (M1DST)"));
-                        msg.AddTo(member.EmailAddress, member.Name);
-                        msg.SetSubject("Coming Soon at the Swindon & District Amateur Radio Club");
-                        //msg.AddContent(MimeType.Text, "This is just a simple test message!");
-                        msg.AddContent(MimeType.Html, emailHtmlBody);
-                        var response = await client.SendEmailAsync(msg);
+                        try
+                        {
+                            var msg = new SendGridMessage();
+                            msg.SetFrom(new EmailAddress("james@m1dst.co.uk", "James Patterson (M1DST)"));
+                            msg.AddTo(member.EmailAddress, member.Name);
+                            msg.SetSubject("Coming Soon at the Swindon & District Amateur Radio Club");
+                            //msg.AddContent(MimeType.Text, "This is just a simple test message!");
+                            msg.AddContent(MimeType.Html, emailHtmlBody);
+                            var response = await client.SendEmailAsync(msg);
+                            log.LogInformation($"Email was sent to {member.EmailAddress}.  Response: {response.Body}");
+                        }
+                        catch (Exception ex)
+                        {
+                            log.LogInformation($"There was a problem emailing {member.EmailAddress}.  Exception: {ex.Message}");
+                        }
+
                     });
                     
                     log.LogInformation("Done.");
