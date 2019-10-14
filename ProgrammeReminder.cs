@@ -16,7 +16,7 @@ namespace ClubEmailer
     public static class ProgrammeReminder
     {
         [FunctionName("ProgrammeReminder")]
-        public static void Run([TimerTrigger("0 0 6 * * Mon")]TimerInfo myTimer, ILogger log, ExecutionContext  context)
+        public static void Run([TimerTrigger("0 0 12 * * Mon")]TimerInfo myTimer, ILogger log, ExecutionContext  context)
         {
             var webClient = new WebClient();
             log.LogInformation($"SDARC Programme Reminder executed at: {DateTime.Now}");
