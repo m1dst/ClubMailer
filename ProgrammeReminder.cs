@@ -74,7 +74,7 @@ namespace ClubEmailer
                         try
                         {
                             var msg = new SendGridMessage();
-                            msg.SetFrom(new EmailAddress("james@m1dst.co.uk", "James Patterson (M1DST)"));
+                            msg.SetFrom(new EmailAddress(Environment.GetEnvironmentVariable("FromEmailAddress"), Environment.GetEnvironmentVariable("FromName")));
                             msg.AddTo(member.EmailAddress, member.Name);
                             msg.SetSubject("Coming Soon at the Swindon & District Amateur Radio Club");
                             //msg.AddContent(MimeType.Text, "This is just a simple test message!");
