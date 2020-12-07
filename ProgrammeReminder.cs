@@ -3,20 +3,19 @@ using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
-using SendGrid;
-using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Mail;
 
 namespace ClubEmailer
 {
     public static class ProgrammeReminder
     {
         [FunctionName("ProgrammeReminder")]
-        public static void Run([TimerTrigger("0 0 12 * * Mon")]TimerInfo myTimer, ILogger log, ExecutionContext  context)
+        public static void Run([TimerTrigger("0 0 12 * * Mon")] TimerInfo myTimer, ILogger log, ExecutionContext context)
         {
             var webClient = new WebClient();
             log.LogInformation($"SDARC Programme Reminder executed at: {DateTime.Now}");
@@ -35,7 +34,7 @@ namespace ClubEmailer
                 var emailHtmlBody = File.ReadAllText(Path.Combine(context.FunctionAppDirectory, "ThisWeekEmailTemplate.html"));
 
                 var eventsHtml = new List<string>();
-                foreach (var occurence in thisWeeksEvents.OrderBy(x=> x.Period.StartTime))
+                foreach (var occurence in thisWeeksEvents.OrderBy(x => x.Period.StartTime))
                 {
                     var sourceEvent = occurence.Source as CalendarEvent;
 
@@ -67,20 +66,34 @@ namespace ClubEmailer
 
                     log.LogInformation($"Found {members.Count} members who have consented to being contacted.");
 
-                    var client = new SendGridClient(Environment.GetEnvironmentVariable("SendGridApiKey"));
+                    var smtpClient = new SmtpClient(Environment.GetEnvironmentVariable("SmtpServer"))
+                    {
+                        Port = Convert.ToInt32(Environment.GetEnvironmentVariable("SmtpServerPort")),
+                        Credentials = new NetworkCredential(Environment.GetEnvironmentVariable("SmtpServerUsername"), Environment.GetEnvironmentVariable("SmtpServerPassword")),
+                        EnableSsl = true,
+                    };
+                    log.LogInformation($"Sending emails from {Environment.GetEnvironmentVariable("FromEmailAddress")} {Environment.GetEnvironmentVariable("FromName")}.");
 
-                    members.ForEach(async member =>
+                    members.ForEach(member =>
                     {
                         try
                         {
-                            var msg = new SendGridMessage();
-                            msg.SetFrom(new EmailAddress(Environment.GetEnvironmentVariable("FromEmailAddress"), Environment.GetEnvironmentVariable("FromName")));
-                            msg.AddTo(member.EmailAddress, member.Name);
-                            msg.SetSubject("Coming Soon at the Swindon & District Amateur Radio Club");
-                            //msg.AddContent(MimeType.Text, "This is just a simple test message!");
-                            msg.AddContent(MimeType.Html, emailHtmlBody);
-                            var response = await client.SendEmailAsync(msg);
-                            log.LogInformation($"Email was sent to {member.EmailAddress}.  Response: {response.Body}");
+
+                            var msg = new MailMessage
+                            {
+                                From = new MailAddress(Environment.GetEnvironmentVariable("FromEmailAddress"),
+                                    Environment.GetEnvironmentVariable("FromName")),
+                                Subject = "Coming Soon at the Swindon & District Amateur Radio Club",
+                                Body = emailHtmlBody,
+                                IsBodyHtml = true
+                            };
+
+                            msg.To.Add(new MailAddress(member.EmailAddress, $"{member.Name} - {member.Callsign}"));
+
+                            smtpClient.Send(msg);
+
+                            log.LogInformation($"Email was sent to {member.EmailAddress}.");
+
                         }
                         catch (Exception ex)
                         {
@@ -88,7 +101,7 @@ namespace ClubEmailer
                         }
 
                     });
-                    
+
                     log.LogInformation("Done.");
 
                 }
