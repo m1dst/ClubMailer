@@ -11,6 +11,7 @@ namespace ClubEmailer
                 .TypeConverterOption.BooleanValues(true, true, "Yes", "Y")
                 .TypeConverterOption.BooleanValues(false, true, "No", "N", "N/A", "");
             
+            Map(m => m.Period).Name("Period");
             Map(m => m.Name).Name("Name");
             Map(m => m.EmailAddress).Name("Email Address");
         }

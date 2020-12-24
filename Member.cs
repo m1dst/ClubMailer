@@ -10,6 +10,7 @@ namespace ClubEmailer
         public string Callsign { get; set; }
         public string Name { get; set; }
         public string EmailAddress { get; set; }
+        public string Period { get; set; }
         public bool GDPRConsent { get; set; }
     }
 }

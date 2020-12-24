@@ -88,6 +88,11 @@ namespace ClubEmailer
                                 IsBodyHtml = true
                             };
 
+                            if (string.IsNullOrEmpty(member.Period))
+                            {
+                                msg.Subject = "Coming Soon at SDARC - Your membership has expired!";
+                            }
+
                             msg.To.Add(new MailAddress(member.EmailAddress, $"{member.Name} - {member.Callsign}"));
 
                             smtpClient.Send(msg);
