@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
@@ -18,23 +17,25 @@ namespace ClubEmailer
     {
         [FunctionName("WebhookToEmail")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
 
             log.LogInformation("Starting...");
 
-            string subject = req.Query["subject"];
-            string messageBody = req.Query["message"];
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            subject = subject ?? data?.subject;
-            messageBody = messageBody ?? data?.messageBody;
+            var formData = await req.ReadFormAsync();
+            string subject = formData["subject"];
+            string messageBody = formData["message"];
 
             if (string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(messageBody))
             {
-                return new BadRequestObjectResult("Please pass a subject and body to the query string or in the request body");
+                log.LogCritical("Please pass a subject and body to the query string or in the request body.");
+                return new BadRequestObjectResult("Please pass a subject and body to the query string or in the request body.");
+            }
+            else
+            {
+                log.LogInformation($"Subject: {subject}");
+                log.LogInformation($"Message: {messageBody}");
             }
 
             // Download the membership database.
@@ -90,7 +91,7 @@ namespace ClubEmailer
 
             log.LogInformation("Done.");
 
-            return new OkObjectResult("{success: true}");
+            return new JsonResult(new { success = true });
         }
     }
 }
