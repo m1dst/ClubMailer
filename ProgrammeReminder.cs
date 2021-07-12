@@ -104,7 +104,7 @@ namespace ClubEmailer
 
                                 smtpClient.Send(msg);
 
-                                log.LogInformation($"Email was sent to {member.EmailAddress}.");
+                                log.LogInformation($"Email was sent to {member.EmailAddress}.{(string.IsNullOrEmpty(member.Period) ? " - Membership Expired" : "")}");
                             }
                             catch (Exception ex)
                             {
